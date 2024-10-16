@@ -62,4 +62,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For any inquiries, please contact [yourname](mailto:youremail@example.com).
+For any inquiries, please contact Ahmad Said Husirami , ahmadhusirami@gmail.com , +961 - 71 793 152 .

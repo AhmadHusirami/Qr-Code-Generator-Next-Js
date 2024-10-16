@@ -3,19 +3,19 @@ export const projects: {
   href: string;
 }[] = [
   {
-    title: "Tor-movies",
-    href: "https://tor-movies.vercel.app/",
+    title: "My-Portfolio",
+    href: "https://ahmad-husirami.vercel.app/",
   },
   {
-    title: "Section-hub",
-    href: "section-hub.vercel.app/",
+    title: "Todo-List",
+    href: "https://to-do-app-husirami.vercel.app/",
   },
   {
-    title: "Portfolio",
-    href: "https://soufiane-el-hamri.vercel.app/",
+    title: "ZTC-International",
+    href: "https://ztc-international.com/",
   },
 ];
 
-export const URL_GITHUB = "https://github.com/sel-hamr";
+export const URL_GITHUB = "https://github.com/AhmadHusirami";
 
-export const URL_LINKEDIN = "https://www.linkedin.com/in/soufiane-elhamri/";
+export const URL_LINKEDIN = "https://www.linkedin.com/in/ahmad-husirami-ab438b272/";

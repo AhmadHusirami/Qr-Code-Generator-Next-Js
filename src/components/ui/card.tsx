@@ -61,7 +61,7 @@ const CardContent = React.forwardRef<
 ));
 CardContent.displayName = "CardContent";
 
-const CardFooter = React.forwardRef<
+const CardFooterButton = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
@@ -71,11 +71,27 @@ const CardFooter = React.forwardRef<
     {...props}
   />
 ));
+CardFooterButton.displayName = "CardFooterButton";
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col items-center p-6 pt-0", className)}
+    {...props}
+  >
+    <p className="text-sm text-muted-foreground">CopyRight © <span><a href="https://ahmad-husirami.vercel.app/" target="_blank">Ahmad Said Husirami</a></span></p>
+
+  </div>
+));
 CardFooter.displayName = "CardFooter";
 
 export {
   Card,
   CardHeader,
+  CardFooterButton,
   CardFooter,
   CardTitle,
   CardDescription,

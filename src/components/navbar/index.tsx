@@ -14,19 +14,26 @@ export const Navbar = () => {
         <Logo />
         <MainNav />
         <div className="flex items-center gap-2">
+        <Link
+            href="https://www.linkedin.com/in/ahmad-husirami-ab438b272/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <Icons.linkedIn className="size-7 md:size-8 fill-current" />
+          </Link>
           <Link
-            href="https://github.com/sel-hamr"
+            href="https://github.com/AhmadHusirami"
             target="_blank"
             rel="noreferrer"
           >
             <Icons.gitHub className="size-7 md:size-8 fill-current" />
           </Link>
           <Link
-            href="https://www.linkedin.com/in/soufiane-elhamri/"
+            href="https://wa.me/96171793152"
             target="_blank"
             rel="noreferrer"
           >
-            <Icons.linkedIn className="size-7 md:size-8 fill-current" />
+            <Icons.Whatsapp className="size-10 md:size-8 fill-current" />
           </Link>
           <ModeToggle />
           <MobileNav />

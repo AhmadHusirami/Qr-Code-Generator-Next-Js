@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooterButton,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -20,8 +21,8 @@ export default function Home() {
 
   const disableButton = url === "" || size === "";
   return (
-    <main className="flex  flex-col items-center  md:justify-between justify-center md:container md:mt-24 mt-8">
-      <Card className="w-full max-w-sm mx-auto border-[0px] md:border ">
+    <main className="flex flex-col items-center md:justify-between justify-center md:container md:mt-24 mt-8">
+      <Card className="w-full max-w-sm mx-auto border-[0px] md:border mt-24 md:mt-0">
         <CardHeader>
           <CardTitle className="text-2xl">QR Code Generator</CardTitle>
           <CardDescription>
@@ -45,13 +46,16 @@ export default function Home() {
             <SelectSize setSize={setSize} />
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooterButton>
           <ShowQRcode
             QRcode={qrCode}
             generateQRCode={generateQRCode}
             disableButton={disableButton}
             setColor={setColor}
           />
+        </CardFooterButton>
+        <CardFooter>
+
         </CardFooter>
       </Card>
     </main>

@@ -15,7 +15,7 @@ export async function generateQRCodeImg(
     width: size,
     margin: 2,
     type: "image/png",
-    version: 2,
+    version: 3, // Manually set the version to 3
     maskPattern: 7,
     color: {
       dark: color,
@@ -33,7 +33,7 @@ export async function generateQRCodeSVG(
     width: size,
     margin: 2,
     type: "svg",
-    version: 2,
+    version: 3, // Manually set the version to 3
     maskPattern: 7,
     color: {
       dark: color,
@@ -41,6 +41,7 @@ export async function generateQRCodeSVG(
     },
   });
 }
+
 
 export function downloadQRCode(url: string) {
   const a = document.createElement("a");
