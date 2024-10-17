@@ -42,7 +42,6 @@ export async function generateQRCodeSVG(
   });
 }
 
-
 export function downloadQRCode(url: string) {
   const a = document.createElement("a");
   a.href = url;
