@@ -37,23 +37,28 @@ export default function Home() {
     }
   }, []);
 
-  const openCamera = async () => {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-    if (isIOS) {
-      // For iOS, it is best to prompt the user to open the camera app directly
-      window.location.href = "camera://";
-    } else {
-      // For Android or other devices, request camera access
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: true });
-        // You can add additional logic to open the QR code scanner here
-      } catch (err) {
-        console.error("Error accessing camera: ", err);
-        // Handle error (e.g., show a message to the user)
+  const openCamera = () => {
+    // Create an input element to open the camera
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.capture = "camera"; // Prompt the device's camera
+  
+    input.onchange = (event) => {
+      const target = event.target as HTMLInputElement; // Type assertion
+      if (target?.files && target.files.length > 0) {
+        const file = target.files[0];
+        // Handle the image file (e.g., scan QR code, etc.)
+        console.log(file);
+        // Here you can add the logic to process the QR code from the image
       }
-    }
+    };
+  
+    // Trigger the input click to open the camera
+    input.click();
   };
+  
+  
 
   return (
     <main className="flex flex-col items-center md:justify-between justify-center md:container md:mt-24 mt-8">
