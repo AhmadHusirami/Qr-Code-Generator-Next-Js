@@ -23,7 +23,10 @@ type ShowQRcodeProps = {
   disableButton?: boolean;
   setColor: (color: string) => void;
   url: string;
-  setShowConfetti: (show: boolean) => void; // Add prop for confetti
+  size: string; // Add size prop to the component
+  setSize: (size: string) => void; // Add setSize prop to the component
+  setShowConfetti: (show: boolean) => void;
+  resetForm: () => void; // Function to reset the form (URL and size)
 };
 
 export const ShowQRcode = ({
@@ -32,7 +35,10 @@ export const ShowQRcode = ({
   disableButton,
   setColor,
   url,
+  size,
+  setSize,
   setShowConfetti,
+  resetForm,
 }: ShowQRcodeProps) => {
   const handleDownloadCode = () => {
     downloadQRCode(QRcode.img);
@@ -56,27 +62,23 @@ export const ShowQRcode = ({
 
     const currentGenerationCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
 
-    // Check if the user can generate more QR codes
     if (currentGenerationCount < 5) {
-      await generateQRCode(); // Ensure this is awaited
-
-      // Increment and store the generation count after a successful generation
+      await generateQRCode();
       const newGenerationCount = currentGenerationCount + 1;
       localStorage.setItem("qrCodeGenerationCount", newGenerationCount.toString());
 
-      // Show the limit dialog if they reach the maximum number of generations
       if (newGenerationCount === 5) {
         const currentTime = Date.now();
         localStorage.setItem("lastGenerationTime", currentTime.toString());
       }
     } else {
-      setShowLimitDialog(true); // Show dialog if already at the limit
+      setShowLimitDialog(true);
     }
   };
 
   useEffect(() => {
     const checkLimitTime = () => {
-      const limitDuration = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+      const limitDuration = 4 * 60 * 60 * 1000;
       const lastGenerationTime = localStorage.getItem("lastGenerationTime");
 
       if (lastGenerationTime) {
@@ -85,17 +87,15 @@ export const ShowQRcode = ({
         setTimeLeft(Math.floor(remainingTime / 1000));
 
         if (remainingTime > 0) {
-          setShowLimitDialog(true); // Show limit dialog if limit period is still active
+          setShowLimitDialog(true);
         }
       }
     };
 
-    // Check for limit when component loads
     checkLimitTime();
 
-    // Update the countdown every second
     const interval = setInterval(() => {
-      const limitDuration = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+      const limitDuration = 4 * 60 * 60 * 1000;
       const lastGenerationTime = localStorage.getItem("lastGenerationTime");
 
       if (lastGenerationTime) {
@@ -107,20 +107,17 @@ export const ShowQRcode = ({
           localStorage.removeItem("qrCodeGenerationCount");
           localStorage.removeItem("lastGenerationTime");
           setShowLimitDialog(false);
-          setShowConfetti(true); // Show confetti when the time is up
+          setShowConfetti(true);
 
-          // Set timeout to hide confetti after 5 seconds
           setTimeout(() => {
-            setShowConfetti(false); // Hide confetti after 5 seconds
+            setShowConfetti(false);
           }, 5000);
         }
       }
     }, 1000);
 
-    return () => clearInterval(interval); // Clean up the interval on component unmount
+    return () => clearInterval(interval);
   }, []);
-
-
 
   const formatTimeLeft = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -135,8 +132,8 @@ export const ShowQRcode = ({
         open={isQRCodeDialogOpen}
         onOpenChange={(isOpen) => {
           setIsQRCodeDialogOpen(isOpen);
-          // Check if limit dialog should be opened when QR Code dialog is closed
           if (!isOpen) {
+            resetForm(); // Call resetForm when the dialog is closed
             const currentGenerationCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
             if (currentGenerationCount >= 5) {
               setShowLimitDialog(true);
@@ -181,10 +178,7 @@ export const ShowQRcode = ({
 
       {/* Limit Reached Dialog */}
       <Dialog open={showLimitDialog} onOpenChange={() => { }}>
-        <DialogContent
-          className="sm:max-w-[600px] max-w-[300px] h-[250px] sm:h-[150px] rounded-lg"
-          hideCloseButton={true} // Hide the close button for the limit dialog
-        >
+        <DialogContent className="sm:max-w-[600px] max-w-[300px] h-[250px] sm:h-[150px] rounded-lg" hideCloseButton={true}>
           <DialogHeader>
             <DialogTitle>Limit Reached</DialogTitle>
           </DialogHeader>

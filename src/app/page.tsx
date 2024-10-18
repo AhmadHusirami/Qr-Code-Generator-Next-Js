@@ -19,21 +19,20 @@ import React, { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 
 export default function Home() {
-  const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } =
-    useGenerateQRCode();
+  const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog, setShowLimitDialog } =
+    useGenerateQRCode(); // Include setShowLimitDialog here
 
   const disableButton = url === "" || size === "";
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Check local storage to see if the user generated 5 QR codes and the last generation was yesterday
   useEffect(() => {
     const currentCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
     const lastGenerationTime = parseInt(localStorage.getItem("lastGenerationTime") || "0");
-    const oneDayInMillis = 4 * 60 * 60 * 1000;
+    const fourHoursInMillis = 4 * 60 * 60 * 1000;
 
-    if (currentCount >= 5 && Date.now() - lastGenerationTime >= oneDayInMillis) {
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000); // Hide confetti after 5 seconds
+    // Check if the user is eligible to generate more QR codes
+    if (currentCount >= 5 && Date.now() - lastGenerationTime < fourHoursInMillis) {
+      setShowLimitDialog(true); // Use setShowLimitDialog instead
     }
   }, []);
 
@@ -61,7 +60,8 @@ export default function Home() {
           </div>
           <div className="grid gap-2">
             <Label>Size</Label>
-            <SelectSize setSize={setSize} />
+            {/* Pass size as a prop */}
+            <SelectSize setSize={setSize} size={size} />
           </div>
         </CardContent>
         <CardFooterButton>
@@ -71,11 +71,16 @@ export default function Home() {
             disableButton={disableButton}
             setColor={setColor}
             url={url}
-            setShowConfetti={setShowConfetti} // Pass the setShowConfetti function down
+            size={size} // Pass size prop here
+            setSize={setSize} // Pass setSize prop here
+            setShowConfetti={setShowConfetti}
+            resetForm={() => {
+              setUrl(""); // Reset URL
+              setSize(""); // Reset size
+            }}
           />
         </CardFooterButton>
-        <CardFooter>
-        </CardFooter>
+        <CardFooter></CardFooter>
       </Card>
       <ToastContainer />
     </main>

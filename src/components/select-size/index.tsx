@@ -18,10 +18,12 @@ const sizes = [
 
 type SelectSizeProps = {
   setSize: (size: string) => void;
+  size: string; // Pass the current size as a prop
 };
-export function SelectSize({ setSize }: SelectSizeProps) {
+
+export function SelectSize({ setSize, size }: SelectSizeProps) {
   return (
-    <Select onValueChange={setSize}>
+    <Select value={size} onValueChange={setSize}>
       <SelectTrigger>
         <SelectValue placeholder="Select size" />
       </SelectTrigger>
