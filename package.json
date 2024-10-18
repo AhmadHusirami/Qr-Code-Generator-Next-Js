@@ -27,6 +27,7 @@
     "react-confetti": "^6.1.0",
     "react-copy-to-clipboard": "^5.1.0",
     "react-dom": "^18",
+    "react-qr-scanner": "^1.0.0-alpha.11",
     "react-toastify": "^10.0.6",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.4.0",

@@ -18,47 +18,40 @@ import "react-toastify/dist/ReactToastify.css";
 import React, { useEffect, useState } from "react";
 import Confetti from "react-confetti";
 import { Icons } from "@/components/ui/icons";
+import QrScanner from "react-qr-scanner"; // Import the QR scanner
 
 export default function Home() {
   const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog, setShowLimitDialog } =
     useGenerateQRCode();
 
-  const disableButton = url === "" || size === "";
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const disableButton = url === "" || size === "";
 
   useEffect(() => {
     const currentCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
     const lastGenerationTime = parseInt(localStorage.getItem("lastGenerationTime") || "0");
     const fourHoursInMillis = 4 * 60 * 60 * 1000;
 
-    // Check if the user is eligible to generate more QR codes
     if (currentCount >= 5 && Date.now() - lastGenerationTime < fourHoursInMillis) {
       setShowLimitDialog(true);
     }
   }, []);
 
-  const openCamera = () => {
-    // Create an input element to open the camera
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.capture = "camera"; // Prompt the device's camera
-  
-    input.onchange = (event) => {
-      const target = event.target as HTMLInputElement; // Type assertion
-      if (target?.files && target.files.length > 0) {
-        const file = target.files[0];
-        // Handle the image file (e.g., scan QR code, etc.)
-        console.log(file);
-        // Here you can add the logic to process the QR code from the image
-      }
-    };
-  
-    // Trigger the input click to open the camera
-    input.click();
+  const handleScan = (data: string | null) => {
+    if (data) {
+      setUrl(data); // Set the scanned URL
+      setIsScanning(false); // Stop scanning
+    }
   };
-  
-  
+
+  const handleError = (err: any) => {
+    console.error(err);
+  };
+
+  const openScanner = () => {
+    setIsScanning(true); // Start scanning
+  };
 
   return (
     <main className="flex flex-col items-center md:justify-between justify-center md:container md:mt-24 mt-8">
@@ -67,7 +60,7 @@ export default function Home() {
         <CardHeader>
           <CardTitle className="text-2xl flex justify-between w-full">
             QR Code Generator
-            <div onClick={openCamera} className="cursor-pointer block md:hidden"> {/* Show on small screens only */}
+            <div onClick={openScanner} className="cursor-pointer block md:hidden"> {/* Show on small screens only */}
               <Icons.camera className="size-7 md:size-8 fill-current ml-2" />
             </div>
           </CardTitle>
@@ -110,6 +103,25 @@ export default function Home() {
         </CardFooterButton>
         <CardFooter></CardFooter>
       </Card>
+
+      {/* Show the QR scanner when isScanning is true */}
+      {isScanning && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+          <QrScanner
+            delay={300}
+            onError={handleError}
+            onScan={handleScan}
+            style={{ width: "100%", height: "100%" }}
+          />
+          <button
+            onClick={() => setIsScanning(false)}
+            className="absolute top-4 right-4 text-white text-2xl"
+          >
+            X
+          </button>
+        </div>
+      )}
+
       <ToastContainer />
     </main>
   );
