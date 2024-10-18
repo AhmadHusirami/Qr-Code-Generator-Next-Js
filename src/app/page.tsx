@@ -17,53 +17,31 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import React, { useEffect, useState } from "react";
 import Confetti from "react-confetti";
-import { Icons } from "@/components/ui/icons";
-import QrScanner from "react-qr-scanner"; // Import the QR scanner
 
 export default function Home() {
   const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog, setShowLimitDialog } =
-    useGenerateQRCode();
+    useGenerateQRCode(); // Include setShowLimitDialog here
 
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
   const disableButton = url === "" || size === "";
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
     const currentCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
     const lastGenerationTime = parseInt(localStorage.getItem("lastGenerationTime") || "0");
     const fourHoursInMillis = 4 * 60 * 60 * 1000;
 
+    // Check if the user is eligible to generate more QR codes
     if (currentCount >= 5 && Date.now() - lastGenerationTime < fourHoursInMillis) {
-      setShowLimitDialog(true);
+      setShowLimitDialog(true); // Use setShowLimitDialog instead
     }
   }, []);
-
-  const handleScan = (data: string | null) => {
-    if (data) {
-      setUrl(data); // Set the scanned URL
-      setIsScanning(false); // Stop scanning
-    }
-  };
-
-  const handleError = (err: any) => {
-    console.error(err);
-  };
-
-  const openScanner = () => {
-    setIsScanning(true); // Start scanning
-  };
 
   return (
     <main className="flex flex-col items-center md:justify-between justify-center md:container md:mt-24 mt-8">
       {showConfetti && <Confetti />}
       <Card className="w-full max-w-sm mx-auto border-[0px] md:border mt-24 md:mt-0">
         <CardHeader>
-          <CardTitle className="text-2xl flex justify-between w-full">
-            QR Code Generator
-            <div onClick={openScanner} className="cursor-pointer block md:hidden"> {/* Show on small screens only */}
-              <Icons.camera className="size-7 md:size-8 fill-current ml-2" />
-            </div>
-          </CardTitle>
+          <CardTitle className="text-2xl">QR Code Generator</CardTitle>
           <CardDescription>
             Generate QR Codes effortlessly with our intuitive interface.
           </CardDescription>
@@ -82,6 +60,7 @@ export default function Home() {
           </div>
           <div className="grid gap-2">
             <Label>Size</Label>
+            {/* Pass size as a prop */}
             <SelectSize setSize={setSize} size={size} />
           </div>
         </CardContent>
@@ -92,36 +71,17 @@ export default function Home() {
             disableButton={disableButton}
             setColor={setColor}
             url={url}
-            size={size}
-            setSize={setSize}
+            size={size} // Pass size prop here
+            setSize={setSize} // Pass setSize prop here
             setShowConfetti={setShowConfetti}
             resetForm={() => {
-              setUrl("");
-              setSize("");
+              setUrl(""); // Reset URL
+              setSize(""); // Reset size
             }}
           />
         </CardFooterButton>
         <CardFooter></CardFooter>
       </Card>
-
-      {/* Show the QR scanner when isScanning is true */}
-      {isScanning && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-          <QrScanner
-            delay={300}
-            onError={handleError}
-            onScan={handleScan}
-            style={{ width: "100%", height: "100%" }}
-          />
-          <button
-            onClick={() => setIsScanning(false)}
-            className="absolute top-4 right-4 text-white text-2xl"
-          >
-            X
-          </button>
-        </div>
-      )}
-
       <ToastContainer />
     </main>
   );
