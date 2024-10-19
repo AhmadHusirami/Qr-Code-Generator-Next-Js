@@ -20,7 +20,6 @@ import Confetti from "react-confetti";
 import { Icons } from "@/components/ui/icons";
 import { Html5Qrcode } from "html5-qrcode";
 
-
 export default function Home() {
   const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } =
     useGenerateQRCode();
@@ -50,32 +49,33 @@ export default function Home() {
         const newQrCodeScanner = new Html5Qrcode("qr-reader");
 
         Html5Qrcode.getCameras().then((devices) => {
-          const cameraId =
-            selectedCamera === "environment" ? devices[0].id : devices[1]?.id || devices[0].id;
+          if (devices.length > 0) {
+            const cameraId =
+              selectedCamera === "environment" ? devices[0].id : devices[1]?.id || devices[0].id;
 
-          // Show the toast message once when the scanner is opened
-          toast.info("No QR code found. Please position a valid code in front of the camera.");
+            // Show the toast message once when the scanner is opened
+            toast.info("No QR code found. Please position a valid code in front of the camera.");
 
-          newQrCodeScanner
-            .start(
-              cameraId,
-              { fps: 10, qrbox: 250 },
-              (decodedText) => {
-                newQrCodeScanner.stop().then(() => {
-                  setScanning(false);
-                  setQrCodeScanner(null); // Clear the scanner instance
-                  window.open(decodedText, "_blank"); // Open the decoded URL in a new tab
-                });
-              },
-              (errorMessage) => {
-                // Do nothing for "NotFoundException", as we've already shown the initial toast
-              }
-            )
-            .catch((err) => {
-              console.error("Error starting QR code scanner", err);
-            });
+            newQrCodeScanner
+              .start(
+                cameraId,
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                  // Open the URL in a new tab without closing the scanner dialog
+                  window.open(decodedText, "_blank");
+                },
+                (errorMessage) => {
+                  // Do nothing for "NotFoundException", as we've already shown the initial toast
+                }
+              )
+              .catch((err) => {
+                console.error("Error starting QR code scanner", err);
+              });
 
-          setQrCodeScanner(newQrCodeScanner); // Save the scanner instance
+            setQrCodeScanner(newQrCodeScanner); // Save the scanner instance
+          } else {
+            toast.error("No cameras found on this device.");
+          }
         });
       }
     }
@@ -157,9 +157,13 @@ export default function Home() {
             <div id="qr-reader" className="w-full"></div>
             <div className="grid gap-2 mt-4">
               <Label>Camera</Label>
-              <select value={selectedCamera} onChange={(e) => setSelectedCamera(e.target.value)} className="border rounded p-2 focus:outline-none focus:ring-0 hover:bg-gray-200 dark:hover:bg-black">
-                <option value="user" className="border rounded-none">Back Camera</option>
+              <select
+                value={selectedCamera}
+                onChange={(e) => setSelectedCamera(e.target.value)}
+                className="border rounded p-2 focus:outline-none focus:ring-0 hover:bg-gray-200 dark:hover:bg-black"
+              >
                 <option value="environment" className="border rounded-none">Front Camera</option>
+                <option value="user" className="border rounded-none">Back Camera</option>
               </select>
             </div>
           </div>
