@@ -20,6 +20,39 @@ import Confetti from "react-confetti";
 import { Icons } from "@/components/ui/icons";
 import { Html5Qrcode } from "html5-qrcode";
 
+// Define a type for the InfoDialog props
+interface InfoDialogProps {
+  data: Record<string, string | undefined>;
+  onClose: () => void;
+}
+
+const InfoDialog: React.FC<InfoDialogProps> = ({ data, onClose }) => {
+  const wifiData = {
+    SSID: data["S"] || "N/A",
+    SecurityType: data["T"] || "N/A",
+    Password: data["P"] || "N/A",
+    HiddenNetwork: data["H"] === "true" ? "Yes" : "No",
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-black p-4 rounded-lg relative w-full max-w-sm">
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
+          <Icons.close className="size-10 md:size-8 fill-current" />
+        </button>
+        <div className="text-center mb-2">QR Code Information</div>
+        <div className="grid gap-2">
+          {Object.entries(wifiData).map(([key, value]) => (
+            <div key={key} className="flex justify-between">
+              <span className="font-semibold">{key}:</span>
+              <span>{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } =
@@ -28,8 +61,9 @@ export default function Home() {
   const disableButton = url === "" || size === "";
   const [showConfetti, setShowConfetti] = useState(false);
   const [scanning, setScanning] = useState(false); // Manage the visibility of the scanner dialog
-  const [selectedCamera, setSelectedCamera] = useState("environment"); // Default to back camera
+  const [selectedCamera, setSelectedCamera] = useState<string>("environment"); // Default to back camera
   const [qrCodeScanner, setQrCodeScanner] = useState<Html5Qrcode | null>(null); // Manage the QRCode scanner instance
+  const [infoDialogData, setInfoDialogData] = useState<Record<string, string | undefined> | null>(null); // Data to be displayed in the info dialog
 
   useEffect(() => {
     const currentCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
@@ -61,10 +95,18 @@ export default function Home() {
               cameraId,
               { fps: 10, qrbox: 250 },
               (decodedText) => {
+                // Always stop the scanner after decoding to prevent multiple triggers
                 newQrCodeScanner.stop().then(() => {
                   setScanning(false);
                   setQrCodeScanner(null); // Clear the scanner instance
-                  window.open(decodedText, "_blank"); // Open the decoded URL in a new tab
+
+                  // Check if the decoded text is a URL or Wi-Fi info
+                  if (isWifiData(decodedText)) {
+                    const parsedData = parseQRCodeData(decodedText);
+                    setInfoDialogData(parsedData);
+                  } else {
+                    window.open(decodedText, "_blank"); // Open URL in a new tab
+                  }
                 });
               },
               (errorMessage) => {
@@ -81,6 +123,24 @@ export default function Home() {
     }
   }, [scanning, selectedCamera]);
 
+  // Function to check if decoded text is Wi-Fi data
+  const isWifiData = (data: string): boolean => {
+    return data.startsWith("WIFI:");
+  };
+
+  // Function to parse the QR code data
+  const parseQRCodeData = (data: string): Record<string, string | undefined> => {
+    const entries = data.split(';');
+    const result: Record<string, string | undefined> = {};
+    entries.forEach(entry => {
+      const [key, value] = entry.split(':');
+      if (key && value) {
+        result[key.trim()] = value.trim();
+      }
+    });
+    return result;
+  };
+
   // Close the scanning modal and stop the scanner
   const stopScanning = () => {
     if (qrCodeScanner) {
@@ -94,6 +154,11 @@ export default function Home() {
     } else {
       setScanning(false); // Fallback if the scanner isn't running
     }
+  };
+
+  // Close info dialog
+  const closeInfoDialog = () => {
+    setInfoDialogData(null);
   };
 
   return (
@@ -164,6 +229,10 @@ export default function Home() {
             </div>
           </div>
         </div>
+      )}
+
+      {infoDialogData && (
+        <InfoDialog data={infoDialogData} onClose={closeInfoDialog} />
       )}
 
       <ToastContainer
