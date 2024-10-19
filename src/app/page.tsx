@@ -49,32 +49,27 @@ export default function Home() {
         const newQrCodeScanner = new Html5Qrcode("qr-reader");
 
         Html5Qrcode.getCameras().then((devices) => {
-          const cameraId =
-            selectedCamera === "environment" ? devices[0].id : devices[1]?.id || devices[0].id;
+          // Ensure we select the correct camera based on user choice
+          const cameraId = selectedCamera === "environment"
+            ? devices.find(device => device.label.includes("environment"))?.id || devices[0].id
+            : devices.find(device => device.label.includes("user"))?.id || devices[0].id;
 
-          // Show the toast message once when the scanner is opened
-          toast.info("No QR code found. Please position a valid code in front of the camera.");
-
-          newQrCodeScanner
-            .start(
-              cameraId,
-              { fps: 10, qrbox: 250 },
-              (decodedText) => {
-                newQrCodeScanner.stop().then(() => {
-                  setScanning(false);
-                  setQrCodeScanner(null); // Clear the scanner instance
-                  window.open(decodedText, "_blank"); // Open the decoded URL in a new tab
-                });
-              },
-              (errorMessage) => {
-                // Do nothing for "NotFoundException", as we've already shown the initial toast
-              }
-            )
-            .catch((err) => {
-              console.error("Error starting QR code scanner", err);
+          // Request permission for camera usage
+          newQrCodeScanner.start(cameraId, { fps: 10, qrbox: 250 }, (decodedText) => {
+            newQrCodeScanner.stop().then(() => {
+              setScanning(false);
+              setQrCodeScanner(null); // Clear the scanner instance
+              window.open(decodedText, "_blank"); // Open the decoded URL in a new tab
             });
+          }, (errorMessage) => {
+            // Do nothing for "NotFoundException", as we've already shown the initial toast
+          }).catch((err) => {
+            console.error("Error starting QR code scanner", err);
+          });
 
           setQrCodeScanner(newQrCodeScanner); // Save the scanner instance
+        }).catch(err => {
+          console.error("Error fetching cameras", err);
         });
       }
     }
@@ -83,13 +78,10 @@ export default function Home() {
   // Close the scanning modal and stop the scanner
   const stopScanning = () => {
     if (qrCodeScanner) {
-      qrCodeScanner
-        .stop()
-        .then(() => {
-          setScanning(false);
-          setQrCodeScanner(null); // Clear the scanner instance
-        })
-        .catch((err) => console.error("Error stopping scanner", err));
+      qrCodeScanner.stop().then(() => {
+        setScanning(false);
+        setQrCodeScanner(null); // Clear the scanner instance
+      }).catch((err) => console.error("Error stopping scanner", err));
     } else {
       setScanning(false); // Fallback if the scanner isn't running
     }
