@@ -178,7 +178,10 @@ export const ShowQRcode = ({
 
       {/* Limit Reached Dialog */}
       <Dialog open={showLimitDialog} onOpenChange={() => { }}>
-        <DialogContent className="sm:max-w-[600px] max-w-[300px] h-[250px] sm:h-[150px] rounded-lg" hideCloseButton={true}>
+        <DialogContent
+          className="sm:max-w-[600px] max-w-[300px] h-[250px] sm:h-[150px] rounded-lg"
+          hideCloseButton={true}
+        >
           <DialogHeader>
             <DialogTitle>Limit Reached</DialogTitle>
           </DialogHeader>

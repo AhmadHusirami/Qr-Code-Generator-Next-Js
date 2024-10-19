@@ -4,6 +4,7 @@ import React, { useDeferredValue, useEffect, useState } from "react";
 const MAX_QR_CODES = 5; // Maximum number of QR codes
 const TIME_LIMIT = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
 
+
 export const useGenerateQRCode = () => {
   const [url, setUrl] = React.useState("");
   const [size, setSize] = React.useState("");
@@ -14,31 +15,21 @@ export const useGenerateQRCode = () => {
   const [generatedCount, setGeneratedCount] = useState(0);
   const [lastGeneratedTime, setLastGeneratedTime] = useState<number | null>(null);
 
-  // Initialize or retrieve generation count and last time from localStorage
-  useEffect(() => {
-    const count = parseInt(localStorage.getItem("generatedCount") || "0");
-    const lastTime = parseInt(localStorage.getItem("lastGeneratedTime") || "0");
-    setGeneratedCount(count);
-    setLastGeneratedTime(lastTime);
-
-    // Check if the limit dialog should be shown
-    if (count >= MAX_QR_CODES) {
-      setShowLimitDialog(true);
-    }
-  }, []);
-
   const checkLimit = () => {
     const currentTime = Date.now();
     if (lastGeneratedTime) {
       const timeDiff = currentTime - lastGeneratedTime;
-      if (timeDiff < TIME_LIMIT && generatedCount >= MAX_QR_CODES) {
-        return false; // Limit reached
-      } else if (timeDiff >= TIME_LIMIT) {
+      if (timeDiff < TIME_LIMIT) {
+        if (generatedCount >= MAX_QR_CODES) {
+          setShowLimitDialog(true);
+          return false;
+        }
+      } else {
         // Reset if time has exceeded the limit
         resetGenerationData();
       }
     }
-    return true; // Can generate more QR codes
+    return true;
   };
 
   const resetGenerationData = () => {
@@ -67,6 +58,33 @@ export const useGenerateQRCode = () => {
     localStorage.setItem("lastGeneratedTime", Date.now().toString());
   };
 
+  useEffect(() => {
+    // Retrieve data from local storage on mount
+    const count = parseInt(localStorage.getItem("generatedCount") || "0");
+    const lastTime = parseInt(localStorage.getItem("lastGeneratedTime") || "0");
+    setGeneratedCount(count);
+    setLastGeneratedTime(lastTime);
+
+    // Check if limit dialog should be shown
+    if (count >= MAX_QR_CODES) {
+      setShowLimitDialog(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (deferredColor) {
+      // Regenerate QR code with the new color without affecting the count
+      const updateQRCodeColor = async () => {
+        if (qrCode.img) {
+          const updatedQRCode = await generateQRCodeImg(url, parseInt(size), deferredColor);
+          const updatedQRCodeSVG = await generateQRCodeSVG(url, parseInt(size), deferredColor);
+          setQrCode({ img: updatedQRCode, svg: updatedQRCodeSVG });
+        }
+      };
+      updateQRCodeColor();
+    }
+  }, [deferredColor]);
+
   return {
     url,
     setUrl,
@@ -76,7 +94,6 @@ export const useGenerateQRCode = () => {
     setColor,
     qrCode,
     showLimitDialog,
-    setShowLimitDialog,
-    generateQRCode,
+    generateQRCode, // Ensure this is included in the return statement
   };
 };
