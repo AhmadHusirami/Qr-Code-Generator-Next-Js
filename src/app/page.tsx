@@ -20,6 +20,7 @@ import Confetti from "react-confetti";
 import { Icons } from "@/components/ui/icons";
 import { Html5Qrcode } from "html5-qrcode";
 
+
 export default function Home() {
   const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } =
     useGenerateQRCode();
@@ -146,27 +147,19 @@ export default function Home() {
         <CardFooter></CardFooter>
       </Card>
 
-      {/* QR Scanner Dialog */}
       {scanning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg relative w-full max-w-sm">
-            <button
-              onClick={stopScanning}
-              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
-            >
-              X
+          <div className="bg-white dark:bg-black p-4 rounded-lg relative w-full max-w-sm">
+            <button onClick={stopScanning} className="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
+              <Icons.close className="size-10 md:size-8 fill-current" />
             </button>
             <div className="text-center mb-2">Scan QR Code</div>
             <div id="qr-reader" className="w-full"></div>
             <div className="grid gap-2 mt-4">
               <Label>Camera</Label>
-              <select
-                value={selectedCamera}
-                onChange={(e) => setSelectedCamera(e.target.value)}
-                className="border rounded p-2"
-              >
-                <option value="environment">Front Camera</option>
-                <option value="user">Back Camera</option>
+              <select value={selectedCamera} onChange={(e) => setSelectedCamera(e.target.value)} className="border rounded p-2 focus:outline-none focus:ring-0 hover:bg-gray-200 dark:hover:bg-black">
+                <option value="user" className="border rounded-none">Back Camera</option>
+                <option value="environment" className="border rounded-none">Front Camera</option>
               </select>
             </div>
           </div>
