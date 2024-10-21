@@ -76,75 +76,59 @@ export default function Home() {
     }
   }, []);
 
+  // Add this useEffect to handle starting the QR code scanner
   useEffect(() => {
-    if (scanning) {
-      const qrReaderElement = document.getElementById("qr-reader");
-      if (qrReaderElement) {
-        const newQrCodeScanner = new Html5Qrcode("qr-reader");
+    if (scanning && qrCodeScanner) {
+      qrCodeScanner.stop().then(() => {
+        startScanner(selectedCamera);
+      });
+    }
+  }, [selectedCamera]);
 
-        Html5Qrcode.getCameras().then((devices) => {
-          setAvailableCameras(devices);
-          const frontCameraDevice = devices.find((device) => device.label.toLowerCase().includes("front"));
-          const backCameraDevice = devices.find((device) => device.label.toLowerCase().includes("back")) || devices[0];
+  // Function to start the scanner
+  const startScanner = (cameraId: string) => {
+    const qrReaderElement = document.getElementById("qr-reader");
+    if (qrReaderElement) {
+      const newQrCodeScanner = new Html5Qrcode("qr-reader");
 
-          const cameraId = frontCameraDevice ? frontCameraDevice.id : backCameraDevice.id;
+      newQrCodeScanner
+        .start(
+          cameraId,
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            newQrCodeScanner.stop().then(() => {
+              setScanning(false);
+              setQrCodeScanner(null);
 
-          newQrCodeScanner
-            .start(
-              cameraId,
-              { fps: 10, qrbox: 250 },
-              (decodedText) => {
-                newQrCodeScanner.stop().then(() => {
-                  setScanning(false);
-                  setQrCodeScanner(null);
-
-                  if (decodedText.startsWith("WIFI:")) {
-                    const wifiData = parseWiFiQRCode(decodedText);
-                    setInfoDialogData(wifiData);
-                  } else if (isValidUrl(decodedText)) {
-                    window.open(decodedText, "_blank");
-                  } else {
-                    setInfoDialogData({ ProductName: decodedText });
-                  }
-                });
-              },
-              (errorMessage) => {
-                // Handle "NotFoundException" or other errors
-                console.warn(errorMessage);
-              }
-            )
-            .catch((err) => {
-              console.error("Error starting QR code scanner", err);
-              // Attempt to switch to back camera if front camera fails
-              if (cameraId === frontCameraDevice?.id) {
-                newQrCodeScanner.start(backCameraDevice.id, { fps: 10, qrbox: 250 },
-                  (decodedText) => {
-                    newQrCodeScanner.stop().then(() => {
-                      setScanning(false);
-                      setQrCodeScanner(null);
-
-                      if (decodedText.startsWith("WIFI:")) {
-                        const wifiData = parseWiFiQRCode(decodedText);
-                        setInfoDialogData(wifiData);
-                      } else if (isValidUrl(decodedText)) {
-                        window.open(decodedText, "_blank");
-                      } else {
-                        setInfoDialogData({ ProductName: decodedText });
-                      }
-                    });
-                  },
-                  (errorMessage) => {
-                    console.warn(errorMessage);
-                  }
-                );
+              if (decodedText.startsWith("WIFI:")) {
+                const wifiData = parseWiFiQRCode(decodedText);
+                setInfoDialogData(wifiData);
+              } else if (isValidUrl(decodedText)) {
+                window.open(decodedText, "_blank");
+              } else {
+                setInfoDialogData({ ProductName: decodedText });
               }
             });
-
-          setQrCodeScanner(newQrCodeScanner);
+          },
+          (errorMessage) => {
+            console.warn(errorMessage);
+          }
+        )
+        .catch((err) => {
+          console.error("Error starting QR code scanner", err);
         });
-      }
+
+      setQrCodeScanner(newQrCodeScanner);
+    }
+  };
+
+  // Start the scanner initially with the selected camera
+  useEffect(() => {
+    if (scanning) {
+      startScanner(selectedCamera);
     }
   }, [scanning]);
+
 
   // Function to parse WiFi QR code format
   const parseWiFiQRCode = (wifiString: string): Record<string, string | undefined> => {
