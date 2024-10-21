@@ -55,13 +55,13 @@ const InfoDialog: React.FC<InfoDialogProps> = ({ data, onClose }) => {
 };
 
 export default function Home() {
-  const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode } = useGenerateQRCode();
+  const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } = useGenerateQRCode();
 
   const disableButton = url === "" || size === "";
   const [showConfetti, setShowConfetti] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [selectedCamera, setSelectedCamera] = useState<string>("environment");
-  const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
+  const [availableCameras, setAvailableCameras] = useState<{ id: string, label: string }[]>([]);
   const [qrCodeScanner, setQrCodeScanner] = useState<Html5Qrcode | null>(null);
   const [infoDialogData, setInfoDialogData] = useState<Record<string, string | undefined> | null>(null);
 
@@ -84,10 +84,8 @@ export default function Home() {
 
         Html5Qrcode.getCameras().then((devices) => {
           setAvailableCameras(devices);
-          const frontCameraDevice = devices.find((device) => device.label.toLowerCase().includes("front"));
-          const backCameraDevice = devices.find((device) => device.label.toLowerCase().includes("back")) || devices[0];
-
-          const cameraId = frontCameraDevice ? frontCameraDevice.id : backCameraDevice.id;
+          const backCameraDevice = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
+          const cameraId = backCameraDevice.id;
 
           newQrCodeScanner
             .start(
@@ -109,36 +107,10 @@ export default function Home() {
                 });
               },
               (errorMessage) => {
-                // Handle "NotFoundException" or other errors
-                console.warn(errorMessage);
+                // Do nothing for "NotFoundException"
               }
             )
-            .catch((err) => {
-              console.error("Error starting QR code scanner", err);
-              // Attempt to switch to back camera if front camera fails
-              if (cameraId === frontCameraDevice?.id) {
-                newQrCodeScanner.start(backCameraDevice.id, { fps: 10, qrbox: 250 },
-                  (decodedText) => {
-                    newQrCodeScanner.stop().then(() => {
-                      setScanning(false);
-                      setQrCodeScanner(null);
-
-                      if (decodedText.startsWith("WIFI:")) {
-                        const wifiData = parseWiFiQRCode(decodedText);
-                        setInfoDialogData(wifiData);
-                      } else if (isValidUrl(decodedText)) {
-                        window.open(decodedText, "_blank");
-                      } else {
-                        setInfoDialogData({ ProductName: decodedText });
-                      }
-                    });
-                  },
-                  (errorMessage) => {
-                    console.warn(errorMessage);
-                  }
-                );
-              }
-            });
+            .catch((err) => console.error("Error starting QR code scanner", err));
 
           setQrCodeScanner(newQrCodeScanner);
         });
@@ -227,7 +199,7 @@ export default function Home() {
             url={url}
             size={size}
             setSize={setSize}
-            setShowConfetti={setShowConfetti} // Add this line
+            setShowConfetti={setShowConfetti}
             resetForm={() => {
               setUrl(""); // Reset URL
               setSize(""); // Reset size
