@@ -40,7 +40,7 @@ const InfoDialog: React.FC<InfoDialogProps> = ({ data, onClose }) => {
         <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
           <Icons.close className="size-10 md:size-8 fill-current" />
         </button>
-        <div className="text-center mb-2">QR Code Information</div>
+        <div className="text-center mb-2">WiFi QR Code Information</div>
         <div className="grid gap-2">
           {Object.entries(wifiData).map(([key, value]) => (
             <div key={key} className="flex justify-between">
@@ -55,15 +55,15 @@ const InfoDialog: React.FC<InfoDialogProps> = ({ data, onClose }) => {
 };
 
 export default function Home() {
-  const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } =
-    useGenerateQRCode();
+  const { url, setUrl, size, setSize, setColor, qrCode, generateQRCode, showLimitDialog } = useGenerateQRCode();
 
   const disableButton = url === "" || size === "";
   const [showConfetti, setShowConfetti] = useState(false);
-  const [scanning, setScanning] = useState(false); // Manage the visibility of the scanner dialog
-  const [selectedCamera, setSelectedCamera] = useState<string>("environment"); // Default to back camera
-  const [qrCodeScanner, setQrCodeScanner] = useState<Html5Qrcode | null>(null); // Manage the QRCode scanner instance
-  const [infoDialogData, setInfoDialogData] = useState<Record<string, string | undefined> | null>(null); // Data to be displayed in the info dialog
+  const [scanning, setScanning] = useState(false);
+  const [selectedCamera, setSelectedCamera] = useState<string>("environment");
+  const [availableCameras, setAvailableCameras] = useState<{ id: string, label: string }[]>([]);
+  const [qrCodeScanner, setQrCodeScanner] = useState<Html5Qrcode | null>(null);
+  const [infoDialogData, setInfoDialogData] = useState<Record<string, string | undefined> | null>(null);
 
   useEffect(() => {
     const currentCount = parseInt(localStorage.getItem("qrCodeGenerationCount") || "0");
@@ -72,11 +72,10 @@ export default function Home() {
 
     if (currentCount >= 5 && Date.now() - lastGenerationTime >= oneDayInMillis) {
       setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000); // Hide confetti after 5 seconds
+      setTimeout(() => setShowConfetti(false), 5000);
     }
   }, []);
 
-  // Start QR Code scanning after the modal is rendered
   useEffect(() => {
     if (scanning) {
       const qrReaderElement = document.getElementById("qr-reader");
@@ -84,79 +83,79 @@ export default function Home() {
         const newQrCodeScanner = new Html5Qrcode("qr-reader");
 
         Html5Qrcode.getCameras().then((devices) => {
-          const cameraId =
-            selectedCamera === "environment" ? devices[0].id : devices[1]?.id || devices[0].id;
-
-          // Show the toast message once when the scanner is opened
-          toast.info("No QR code found. Please position a valid code in front of the camera.");
+          setAvailableCameras(devices);
+          const backCameraDevice = devices.find(device => device.label.toLowerCase().includes('back')) || devices[0];
+          const cameraId = backCameraDevice.id;
 
           newQrCodeScanner
             .start(
               cameraId,
               { fps: 10, qrbox: 250 },
               (decodedText) => {
-                // Always stop the scanner after decoding to prevent multiple triggers
                 newQrCodeScanner.stop().then(() => {
                   setScanning(false);
-                  setQrCodeScanner(null); // Clear the scanner instance
+                  setQrCodeScanner(null);
 
-                  // Check if the decoded text is a URL or Wi-Fi info
-                  if (isWifiData(decodedText)) {
-                    const parsedData = parseQRCodeData(decodedText);
-                    setInfoDialogData(parsedData);
+                  if (decodedText.startsWith("WIFI:")) {
+                    const wifiData = parseWiFiQRCode(decodedText);
+                    setInfoDialogData(wifiData);
+                  } else if (isValidUrl(decodedText)) {
+                    window.open(decodedText, "_blank");
                   } else {
-                    window.open(decodedText, "_blank"); // Open URL in a new tab
+                    setInfoDialogData({ ProductName: decodedText });
                   }
                 });
               },
               (errorMessage) => {
-                // Do nothing for "NotFoundException", as we've already shown the initial toast
+                // Do nothing for "NotFoundException"
               }
             )
-            .catch((err) => {
-              console.error("Error starting QR code scanner", err);
-            });
+            .catch((err) => console.error("Error starting QR code scanner", err));
 
-          setQrCodeScanner(newQrCodeScanner); // Save the scanner instance
+          setQrCodeScanner(newQrCodeScanner);
         });
       }
     }
-  }, [scanning, selectedCamera]);
+  }, [scanning]);
 
-  // Function to check if decoded text is Wi-Fi data
-  const isWifiData = (data: string): boolean => {
-    return data.startsWith("WIFI:");
+  // Function to parse WiFi QR code format
+  const parseWiFiQRCode = (wifiString: string): Record<string, string | undefined> => {
+    const regex = /WIFI:S:(.*?);T:(.*?);P:(.*?);H:(.*?);;/;
+    const match = wifiString.match(regex);
+    if (match) {
+      return {
+        S: match[1],
+        T: match[2],
+        P: match[3],
+        H: match[4],
+      };
+    }
+    return { S: undefined, T: undefined, P: undefined, H: undefined };
   };
 
-  // Function to parse the QR code data
-  const parseQRCodeData = (data: string): Record<string, string | undefined> => {
-    const entries = data.split(';');
-    const result: Record<string, string | undefined> = {};
-    entries.forEach(entry => {
-      const [key, value] = entry.split(':');
-      if (key && value) {
-        result[key.trim()] = value.trim();
-      }
-    });
-    return result;
+  const isValidUrl = (string: string): boolean => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
   };
 
-  // Close the scanning modal and stop the scanner
   const stopScanning = () => {
     if (qrCodeScanner) {
       qrCodeScanner
         .stop()
         .then(() => {
           setScanning(false);
-          setQrCodeScanner(null); // Clear the scanner instance
+          setQrCodeScanner(null);
         })
         .catch((err) => console.error("Error stopping scanner", err));
     } else {
-      setScanning(false); // Fallback if the scanner isn't running
+      setScanning(false);
     }
   };
 
-  // Close info dialog
   const closeInfoDialog = () => {
     setInfoDialogData(null);
   };
@@ -172,9 +171,7 @@ export default function Home() {
               <Icons.camera className="size-7 md:size-8 fill-current ml-2" />
             </div>
           </CardTitle>
-          <CardDescription>
-            Generate QR Codes effortlessly with our intuitive interface.
-          </CardDescription>
+          <CardDescription>Generate QR Codes effortlessly with our intuitive interface.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
@@ -219,25 +216,32 @@ export default function Home() {
               <Icons.close className="size-10 md:size-8 fill-current" />
             </button>
             <div className="text-center mb-2">Scan QR Code</div>
-            <div id="qr-reader" className="w-full"></div>
-            <div className="grid gap-2 mt-4">
-              <Label>Camera</Label>
-              <select value={selectedCamera} onChange={(e) => setSelectedCamera(e.target.value)} className="border rounded p-2 focus:outline-none focus:ring-0 hover:bg-gray-200 dark:hover:bg-black">
-                <option value="user" className="border rounded-none">Back Camera</option>
-                <option value="environment" className="border rounded-none">Front Camera</option>
+
+            {/* Camera selection dropdown */}
+            <div className="my-2">
+              <select
+                value={selectedCamera}
+                onChange={(e) => setSelectedCamera(e.target.value)}
+                className="w-full p-2 border rounded"
+              >
+                {availableCameras.map((camera) => (
+                  <option key={camera.id} value={camera.id}>
+                    {camera.label}
+                  </option>
+                ))}
               </select>
             </div>
+
+            <div id="qr-reader" className="w-full"></div>
           </div>
         </div>
       )}
 
-      {infoDialogData && (
-        <InfoDialog data={infoDialogData} onClose={closeInfoDialog} />
-      )}
+      {infoDialogData && <InfoDialog data={infoDialogData} onClose={closeInfoDialog} />}
 
       <ToastContainer
-        position="bottom-center" // Less intrusive position for toast
-        autoClose={5000} // Auto-close after 5 seconds
+        position="bottom-center"
+        autoClose={5000}
         hideProgressBar={false}
         newestOnTop={true}
         closeOnClick
