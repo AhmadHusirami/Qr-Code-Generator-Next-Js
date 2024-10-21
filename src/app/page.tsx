@@ -27,22 +27,15 @@ interface InfoDialogProps {
 }
 
 const InfoDialog: React.FC<InfoDialogProps> = ({ data, onClose }) => {
-  const wifiData = {
-    SSID: data["S"] || "N/A",
-    SecurityType: data["T"] || "N/A",
-    Password: data["P"] || "N/A",
-    HiddenNetwork: data["H"] === "true" ? "Yes" : "No",
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-black p-4 rounded-lg relative w-full max-w-sm">
         <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
           <Icons.close className="size-10 md:size-8 fill-current" />
         </button>
-        <div className="text-center mb-2">WiFi QR Code Information</div>
+        <div className="text-center mb-2">Information</div>
         <div className="grid gap-2">
-          {Object.entries(wifiData).map(([key, value]) => (
+          {Object.entries(data).map(([key, value]) => (
             <div key={key} className="flex justify-between">
               <span className="font-semibold">{key}:</span>
               <span>{value}</span>
@@ -102,7 +95,7 @@ export default function Home() {
                   } else if (isValidUrl(decodedText)) {
                     window.open(decodedText, "_blank");
                   } else {
-                    setInfoDialogData({ ProductName: decodedText });
+                    setInfoDialogData({ Text: decodedText });
                   }
                 });
               },
@@ -124,10 +117,10 @@ export default function Home() {
     const match = wifiString.match(regex);
     if (match) {
       return {
-        S: match[1],
-        T: match[2],
-        P: match[3],
-        H: match[4],
+        SSID: match[1],
+        Type: match[2],
+        Password: match[3],
+        Hidden: match[4],
       };
     }
     return { S: undefined, T: undefined, P: undefined, H: undefined };
